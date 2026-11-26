@@ -350,7 +350,6 @@
     .team-summary[hidden] { display: none; }
     .team-summary dt { color: var(--muted); font-size: 13px; }
     .team-summary dd { margin: 4px 0 0; font-weight: 850; }
-    #teamRecordPlayer { display: block; font-size: 13px; font-weight: 600; }
 
     .empty { display: none; padding: 32px 18px; color: var(--muted); text-align: center; }
 
@@ -421,7 +420,6 @@
           <div><dt>Total vendido</dt><dd id="teamTotal"></dd></div>
           <div><dt>Cantidad de ventas</dt><dd id="teamSales"></dd></div>
           <div><dt>Mediana</dt><dd id="teamMedian"></dd></div>
-          <div><dt>Venta récord</dt><dd><span id="teamRecord"></span><span id="teamRecordPlayer"></span></dd></div>
         </dl>
         <div class="table-wrap">
           <table>
@@ -540,8 +538,6 @@
         button.querySelector(".team-amount").textContent = sales === 1 ? "1 venta" : `${sales} ventas`;
         button.addEventListener("click", () => {
           teamEl.value = team.team;
-          searchEl.value = "";
-          specialtyEl.value = "";
           renderRows();
           document.querySelector("#tableTitle").focus();
         });
@@ -550,7 +546,7 @@
       document.querySelector("#teams").replaceChildren(...buttons);
     }
 
-    function renderTeamSummary() {
+    function renderTeamSummary(rows) {
       const team = teamEl.value;
       document.querySelector("#tableTitle").textContent = team || "Tabla completa";
       document.querySelectorAll("#teams .team-item").forEach((button) => {
@@ -559,15 +555,12 @@
       document.querySelector("#teamSummary").hidden = !team;
       if (!team) return;
 
-      const sales = DATA.players.filter((player) => player.team === team).sort((a, b) => a.amount - b.amount);
-      const middle = Math.floor(sales.length / 2);
-      const median = sales.length ? (sales[Math.floor((sales.length - 1) / 2)].amount + sales[middle].amount) / 2 : null;
-      const record = sales.at(-1);
-      document.querySelector("#teamTotal").textContent = money.format(sales.reduce((total, player) => total + player.amount, 0));
-      document.querySelector("#teamSales").textContent = sales.length;
+      const amounts = rows.map((player) => player.amount).sort((a, b) => a - b);
+      const middle = Math.floor(amounts.length / 2);
+      const median = amounts.length ? (amounts[Math.floor((amounts.length - 1) / 2)] + amounts[middle]) / 2 : null;
+      document.querySelector("#teamTotal").textContent = money.format(amounts.reduce((total, amount) => total + amount, 0));
+      document.querySelector("#teamSales").textContent = amounts.length;
       document.querySelector("#teamMedian").textContent = median === null ? "—" : medianMoney.format(median);
-      document.querySelector("#teamRecord").textContent = record ? money.format(record.amount) : "—";
-      document.querySelector("#teamRecordPlayer").textContent = record?.player ?? "";
     }
 
     function filteredRows() {
@@ -586,7 +579,7 @@
 
     function renderRows() {
       const rows = filteredRows();
-      renderTeamSummary();
+      renderTeamSummary(rows);
       visibleCountEl.textContent = `${rows.length} de ${DATA.players.length} ventas`;
       emptyEl.style.display = rows.length ? "none" : "block";
       rowsEl.innerHTML = rows.map((player) => `

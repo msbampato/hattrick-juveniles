@@ -466,6 +466,8 @@
     const searchEl = document.querySelector("#search");
     const teamEl = document.querySelector("#teamFilter");
     const specialtyEl = document.querySelector("#specialtyFilter");
+    const noSpecialty = "__none__";
+    const noSpecialtyLabel = "Sin especialidad";
     const visibleCountEl = document.querySelector("#visibleCount");
 
     function text(value) {
@@ -549,7 +551,8 @@
     function renderSalesSummary(rows) {
       const team = teamEl.value;
       const specialty = specialtyEl.value;
-      document.querySelector("#tableTitle").textContent = team || specialty || "Tabla completa";
+      const specialtyLabel = specialty === noSpecialty ? noSpecialtyLabel : specialty;
+      document.querySelector("#tableTitle").textContent = team || specialtyLabel || "Tabla completa";
       document.querySelectorAll("#teams .team-item").forEach((button) => {
         button.setAttribute("aria-pressed", String(button.dataset.team === team));
       });
@@ -569,7 +572,9 @@
       const specialty = specialtyEl.value;
       return DATA.players.filter((player) => {
         const matchesQuery = !query || (player.player + " " + player.team).toLowerCase().includes(query);
-        return matchesQuery && (!team || player.team === team) && (!specialty || player.specialty === specialty);
+        const playerSpecialty = text(player.specialty).trim();
+        const matchesSpecialty = specialty === noSpecialty ? !playerSpecialty : !specialty || playerSpecialty === specialty;
+        return matchesQuery && (!team || player.team === team) && matchesSpecialty;
       }).sort((a, b) => {
         const dir = tableState.sortDir === "asc" ? 1 : -1;
         if (tableState.sortKey === "amount" || tableState.sortKey === "rank") return (a[tableState.sortKey] - b[tableState.sortKey]) * dir;
@@ -619,8 +624,12 @@
       const teams = [...new Set([...DATA.teamNames, ...DATA.teams.map((team) => team.team)])].sort(collator.compare);
       populateSelect(teamEl, teams);
       populateSelect(specialtyEl, DATA.specialities);
+      const noSpecialtyOption = document.createElement("option");
+      noSpecialtyOption.value = noSpecialty;
+      noSpecialtyOption.textContent = noSpecialtyLabel;
+      specialtyEl.appendChild(noSpecialtyOption);
       teamEl.value = teams.includes(selectedTeam) ? selectedTeam : "";
-      specialtyEl.value = DATA.specialities.includes(selectedSpecialty) ? selectedSpecialty : "";
+      specialtyEl.value = selectedSpecialty === noSpecialty || DATA.specialities.includes(selectedSpecialty) ? selectedSpecialty : "";
       renderHero();
       renderPodium();
       renderTeams();

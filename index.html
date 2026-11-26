@@ -546,14 +546,16 @@
       document.querySelector("#teams").replaceChildren(...buttons);
     }
 
-    function renderTeamSummary(rows) {
+    function renderSalesSummary(rows) {
       const team = teamEl.value;
-      document.querySelector("#tableTitle").textContent = team || "Tabla completa";
+      const specialty = specialtyEl.value;
+      document.querySelector("#tableTitle").textContent = team || specialty || "Tabla completa";
       document.querySelectorAll("#teams .team-item").forEach((button) => {
         button.setAttribute("aria-pressed", String(button.dataset.team === team));
       });
-      document.querySelector("#teamSummary").hidden = !team;
-      if (!team) return;
+      const showSummary = Boolean(team || specialty);
+      document.querySelector("#teamSummary").hidden = !showSummary;
+      if (!showSummary) return;
 
       const total = rows.reduce((sum, player) => sum + player.amount, 0);
       document.querySelector("#teamTotal").textContent = money.format(total);
@@ -577,7 +579,7 @@
 
     function renderRows() {
       const rows = filteredRows();
-      renderTeamSummary(rows);
+      renderSalesSummary(rows);
       visibleCountEl.textContent = `${rows.length} de ${DATA.players.length} ventas`;
       emptyEl.style.display = rows.length ? "none" : "block";
       rowsEl.innerHTML = rows.map((player) => `
